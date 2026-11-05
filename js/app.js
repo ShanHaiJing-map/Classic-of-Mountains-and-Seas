@@ -39,6 +39,24 @@ const preview=$('marker-preview'),picker=$('marker-picker'),rail=$('chapter-rail
 let s=1,tx=0,ty=0,sel=null,fitted=false;
 let renderedScale=NaN,renderToken=0;
 const defaultHint='<div class="hint"><h2>探索《山海經》</h2>拖曳上方經卷導覽軸，選擇篇章。滑鼠懸停標記可預覽原文；點擊標記後在這裡閱讀完整原文與注釋。密集標記可點擊展開。</div>';
+function chapterIntroHTML(ch){
+  const info=window.SHJ_CHAPTER_INFO?.[ch];
+  if(!info)return `<div class="hint"><h2>〈${esc(ch)}〉</h2><p>此篇介紹尚未收錄。</p></div>`;
+  const count=ALL.filter(e=>e.s===ch).length;
+  const intro=String(info.introduction||'').split('\n').filter(Boolean)
+    .map(t=>`<p>${esc(t)}</p>`).join('');
+  const originals=(info.original||[]).map(t=>`<p class="intro-quote">${esc(t)}</p>`).join('');
+  const notes=(info.notes||[]).map(t=>`<p class="intro-note">${esc(t)}</p>`).join('');
+  return `<div class="chapter-intro"><h2>〈${esc(ch)}〉</h2>
+    <div class="intro-count">本網站收錄 ${count} 條相關資料 · 經卷簡介</div>
+    ${intro}
+    <details><summary>閱讀本篇原文選錄（${(info.original||[]).length} 則）</summary>
+      ${originals}${notes}
+    </details>
+    <p class="intro-method">介紹及選文依據使用者提供的《山海經各篇介紹》文件，仍需與底本核對。</p>
+  </div>`;
+}
+function showChapterIntro(ch){sel=null;mdet.innerHTML=ch?chapterIntroHTML(ch):defaultHint;mdet.scrollTop=0;queueMarkers()}
 mdet.innerHTML=defaultHint;
 function minS(){const r=map.getBoundingClientRect();return Math.max(r.width/W,r.height/H)}
 function clamp(){const r=map.getBoundingClientRect();if(!r.width)return;s=Math.max(s,minS());tx=Math.min(0,Math.max(r.width-W*s,tx));ty=Math.min(0,Math.max(r.height-H*s,ty))}
@@ -139,7 +157,10 @@ map.addEventListener('click',ev=>{if(!ev.target.closest('.dot,.marker-picker'))c
 function mapFilter(){queueMarkers()}
 ['cb','cp','sec'].forEach(id=>$(id).addEventListener('change',mapFilter));$('q').addEventListener('input',mapFilter);
 function selectOnMap(e,center){
-  sel=e;mdet.innerHTML=detailHTML(e,false);mdet.scrollTop=0;
+  sel=e;
+  const ch=$('sec').value;
+  mdet.innerHTML=(ch?`<button type="button" class="back-chapter" data-back-chapter>← 返回〈${esc(ch)}〉介紹</button>`:'')+detailHTML(e,false);
+  mdet.scrollTop=0;
   if(center){const r=map.getBoundingClientRect();if(s<1.4)s=Math.max(minS(),1.8);animateStage();tx=r.width/2-e.px*s;ty=r.height/2-e.py*s;apply()}
   queueMarkers();
 }
@@ -148,9 +169,7 @@ function selectOnMap(e,center){
 const CHAPTERS=['',...ORDER.filter(ch=>ALL.some(e=>e.s===ch))];
 rail.innerHTML=CHAPTERS.map((ch,i)=>{const count=ch?ALL.filter(e=>e.s===ch).length:ALL.length;return `<button type="button" class="chapter-unit${i===0?' active':''}" data-chapter="${esc(ch)}" aria-pressed="${i===0}" title="${ch||'全部篇章'}"><strong>${ch||'全部篇章'}</strong><small>${count} 條 · ${i===0?'查看全圖':'按篇章探索'}</small></button>`}).join('');
 const chapterBtns=[...rail.querySelectorAll('.chapter-unit')];
-let suppressScroll=false,scrollTimer=null,unlockTimer=null,playing=null;
-const playButton=$('chapter-play');
-function stopPlay(){if(playing!==null){clearInterval(playing);playing=null}playButton.textContent='▶';playButton.setAttribute('aria-pressed','false');playButton.setAttribute('aria-label','自動播放經卷')}
+let suppressScroll=false,scrollTimer=null,unlockTimer=null;
 function updateRail(ch,smooth=true){
   chapterBtns.forEach(b=>{const on=b.dataset.chapter===ch;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});
   const b=chapterBtns.find(b=>b.dataset.chapter===ch);if(!b)return;
@@ -158,13 +177,12 @@ function updateRail(ch,smooth=true){
   suppressScroll=true;clearTimeout(unlockTimer);rail.scrollTo({left,behavior:smooth?'smooth':'instant'});
   unlockTimer=setTimeout(()=>{suppressScroll=false},smooth?650:90);
 }
-function chooseChapter(ch,{fromRail=false,fromPlay=false,focus=true}={}){
-  if(!fromPlay)stopPlay();
+function chooseChapter(ch,{fromRail=false,focus=true}={}){
   if($('sec').value!==ch)$('sec').value=ch;
   if(!fromRail)updateRail(ch);
   else chapterBtns.forEach(b=>{const on=b.dataset.chapter===ch;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});
   $('chapter-announcement').textContent=ch?`已切換至${ch}`:'已切換至全部篇章';
-  sel=null;mdet.innerHTML=ch?`<div class="hint"><h2>〈${esc(ch)}〉</h2>已切換至此篇記載。滑鼠懸停標記可查看摘要，點擊標記後在這裡閱讀原文與注釋。</div>`:defaultHint;
+  showChapterIntro(ch);
   hidePreview();closePicker();mapFilter();
   if(focus){const items=ALL.filter(e=>e.px!==undefined&&eligible(e));ch?focusRecords(items):fit()}
 }
@@ -174,7 +192,7 @@ function nearestChapter(){const r=rail.getBoundingClientRect();const center=r.le
   chapterBtns.forEach(b=>{const q=b.getBoundingClientRect(),d=Math.abs(q.left+q.width/2-center);if(d<best){best=d;closest=b}});return closest.dataset.chapter}
 rail.addEventListener('scroll',()=>{if(suppressScroll)return;clearTimeout(scrollTimer);scrollTimer=setTimeout(()=>{if(suppressScroll)return;const ch=nearestChapter();if(ch!==$('sec').value)chooseChapter(ch,{fromRail:true});},130)},{passive:true});
 let drag=null;
-rail.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return;stopPlay();suppressScroll=false;clearTimeout(unlockTimer);drag={id:e.pointerId,x:e.clientX,left:rail.scrollLeft,moved:false};});
+rail.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return;suppressScroll=false;clearTimeout(unlockTimer);drag={id:e.pointerId,x:e.clientX,left:rail.scrollLeft,moved:false};});
 rail.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;const d=e.clientX-drag.x;
   if(Math.abs(d)>5){drag.moved=true;rail.classList.add('dragging');try{rail.setPointerCapture(e.pointerId)}catch(_){}}
   if(drag.moved)rail.scrollLeft=drag.left-d;
@@ -185,13 +203,16 @@ function endRailDrag(e){if(!drag||drag.id!==e.pointerId)return;
 }
 rail.addEventListener('pointerup',endRailDrag);rail.addEventListener('pointercancel',endRailDrag);
 rail.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const i=CHAPTERS.indexOf($('sec').value);chooseChapter(CHAPTERS[Math.max(0,Math.min(CHAPTERS.length-1,i+(e.key==='ArrowRight'?1:-1)))])});
-rail.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();stopPlay();rail.scrollLeft+=e.deltaY}},{passive:false});
-playButton.addEventListener('click',()=>{
-  if(playing!==null){stopPlay();return}
-  if(CHAPTERS.indexOf($('sec').value)===CHAPTERS.length-1)chooseChapter(CHAPTERS[0],{fromPlay:true});
-  playButton.textContent='Ⅱ';playButton.setAttribute('aria-pressed','true');playButton.setAttribute('aria-label','暫停經卷播放');
-  playing=setInterval(()=>{const next=CHAPTERS.indexOf($('sec').value)+1;if(next>=CHAPTERS.length){stopPlay();return}chooseChapter(CHAPTERS[next],{fromPlay:true})},3000);
+rail.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();rail.scrollLeft+=e.deltaY}},{passive:false});
+// 定位按鈕只負責回到所選經卷的地圖範圍，不會自動播放。
+$('chapter-focus').addEventListener('click',()=>{
+  const ch=$('sec').value;
+  const items=ALL.filter(e=>e.px!==undefined&&(!ch||e.s===ch));
+  hidePreview();closePicker();
+  if(ch)focusRecords(items);else fit();
 });
+// 單獨點擊標記後可以返回目前經卷的文字介紹。
+mdet.addEventListener('click',ev=>{if(ev.target.closest('[data-back-chapter]'))showChapterIntro($('sec').value)});
 addEventListener('keydown',ev=>{if(ev.key==='Escape'){closePicker();hidePreview()}});
 requestAnimationFrame(()=>updateRail('',false));
 
@@ -225,7 +246,7 @@ addEventListener('keydown',ev=>{if(ev.key==='Escape')closeDrawer()});
 buildBook('b',$('fb'),$('gb'),$('cbn'));buildBook('p',$('fp'),$('gp'),$('cpn'));
 
 /* ---------- 頁面切換（網址 #map #beasts #people #about） ---------- */
-const VIEWS=['map','beasts','people','about'];
+const VIEWS=['classic','map','beasts','people','about'];
 function route(){const h=location.hash.slice(1);return VIEWS.includes(h)?h:'map'}
 function show(){
   const r=route();
