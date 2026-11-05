@@ -204,12 +204,12 @@ function endRailDrag(e){if(!drag||drag.id!==e.pointerId)return;
 rail.addEventListener('pointerup',endRailDrag);rail.addEventListener('pointercancel',endRailDrag);
 rail.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const i=CHAPTERS.indexOf($('sec').value);chooseChapter(CHAPTERS[Math.max(0,Math.min(CHAPTERS.length-1,i+(e.key==='ArrowRight'?1:-1)))])});
 rail.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();rail.scrollLeft+=e.deltaY}},{passive:false});
-// 定位按鈕只負責回到所選經卷的地圖範圍，不會自動播放。
+// 返回全部篇章：重置篇章、搜尋及類型篩選，還原全圖與右側導覽說明。
 $('chapter-focus').addEventListener('click',()=>{
-  const ch=$('sec').value;
-  const items=ALL.filter(e=>e.px!==undefined&&(!ch||e.s===ch));
-  hidePreview();closePicker();
-  if(ch)focusRecords(items);else fit();
+  $('q').value='';
+  $('cb').checked=true;
+  $('cp').checked=true;
+  chooseChapter('', {focus:true});
 });
 // 單獨點擊標記後可以返回目前經卷的文字介紹。
 mdet.addEventListener('click',ev=>{if(ev.target.closest('[data-back-chapter]'))showChapterIntro($('sec').value)});
