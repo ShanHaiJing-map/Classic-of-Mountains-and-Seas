@@ -12,28 +12,12 @@
 <nav class="nav" aria-label="主選單">
   <a class="brand" href="#map"><span class="seal">山</span><b>山海經</b></a>
   <div class="links">
-    <a href="#classic">關於山海經</a><a href="#map">地圖</a><a href="#beasts">異獸</a><a href="#people">異人</a><a href="#about">關於本計劃</a>
+    <a href="#map">地圖</a><a href="#beasts">異獸</a><a href="#people">異人</a><a href="#about">關於本計劃</a>
   </div>
   <button class="replay" id="replay" type="button" title="重看開場">重看開場</button>
 </nav>
 
 <main>
-  <!-- 關於山海經：來源為使用者提供的 Word 原稿 -->
-  <section class="view" id="v-classic" aria-label="關於山海經">
-    <article class="book about classic-intro">
-      <h1>關於山海經</h1>
-      <h2>成書與流傳</h2>
-      <p>《山海經》是中國現存最早記述山川、物產、異獸、遠國與神話的典籍，全書約三萬一千字。它不是一人一時寫成的，學界一般認為成書於戰國至秦漢之間，由不同時代、不同地域的材料陸續匯集而成。古人相傳是大禹、伯益治水時所記，西漢劉歆稱讚它「皆聖賢之遺事，古文之著明者也」，不過今天多把這看作後人的託名。</p>
-      <p>《漢書·藝文志》著錄為十三篇，今本十八篇是經劉歆校定後流傳下來的。全書分兩大部分：</p>
-      <h2>〈山經〉與〈海經〉</h2>
-      <p>〈山經〉五篇，又稱「五藏山經」，按南、西、北、東、中五個方位，逐座記錄山的里程、草木、礦物、鳥獸，以及祭祀山神的方法，共四百多座山。體例整齊，像一部古代的地理物產志。</p>
-      <p>〈海經〉十三篇，包括〈海外經〉、〈海內經〉和〈大荒經〉，記載四海內外的遠方國度、奇形異人和神祇，又保存了大量古帝世系與神話。精衛填海、夸父逐日、羲和浴日、黃帝戰蚩尤、鯀禹治水等故事，都以本書為最早或最重要的出處。</p>
-      <h2>典籍性質與注釋</h2>
-      <p>這部書的性質向來眾說紛紜：有人視為地理書，《四庫全書》把它歸入小說家類，魯迅則認為它是「古之巫書」。它內容奇詭，東晉郭璞作注時也說，世人讀《山海經》，「皆以其閎誕迂誇，多奇怪俶儻之言，莫不疑焉」。郭璞注是現存最早的注本，清代郝懿行撰《山海經箋疏》，博引群書，考訂文字與名物，是清人研究的集大成之作。</p>
-      <p class="classic-footnote">內容依據所提供的《關於山海經》文件整理；如需學術引用，請另行核對原始文獻。</p>
-    </article>
-  </section>
-
   <!-- 地圖 -->
   <section class="view" id="v-map" aria-label="地圖">
     <div class="mapcol">
@@ -45,7 +29,7 @@
         <span class="count" id="mcount" style="margin:0"></span>
       </div>
       <div class="chapter-nav" aria-label="按經卷順序探索">
-        <button type="button" class="chapter-focus" id="chapter-focus" aria-label="定位所選篇章" title="回到目前所選篇章的地圖範圍">⌖</button>
+        <button type="button" class="chapter-play" id="chapter-play" aria-label="自動播放經卷" aria-pressed="false" title="依經文順序播放">▶</button>
         <div class="chapter-scroller"><div class="chapter-rail" id="chapter-rail" aria-label="橫向拖曳經卷，正中所指篇章將成為篩選條件"></div></div>
         <span class="chapter-sr" id="chapter-announcement" aria-live="polite"></span>
       </div>
@@ -110,7 +94,6 @@
 <aside class="detail drawer" id="drawer" aria-label="詳細資料"></aside>
 
 <script src="js/data.js"></script>
-<script src="js/chapter-intros.js"></script>
 <script src="js/app.js"></script>
 <script src="js/intro-image.js"></script>
   <script src="js/intro.js"></script>
