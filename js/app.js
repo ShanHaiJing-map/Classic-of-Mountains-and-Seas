@@ -53,7 +53,6 @@ function chapterIntroHTML(ch){
     <details><summary>閱讀本篇原文選錄（${(info.original||[]).length} 則）</summary>
       ${originals}${notes}
     </details>
-    <p class="intro-method">介紹及選文依據使用者提供的《山海經各篇介紹》文件，仍需與底本核對。</p>
   </div>`;
 }
 function showChapterIntro(ch){sel=null;mdet.innerHTML=ch?chapterIntroHTML(ch):defaultHint;mdet.scrollTop=0;queueMarkers()}
